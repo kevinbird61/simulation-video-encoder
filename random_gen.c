@@ -1,4 +1,4 @@
-#include "operation.h"
+#include "random_gen.h"
 
 float expon(float mean)  /* Exponential variate generation function. */
 {

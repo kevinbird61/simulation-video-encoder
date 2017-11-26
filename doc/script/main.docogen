@@ -1,7 +1,7 @@
 {
     "title": "Report of Team Simulation Project",
     "options": {
-        "type":"article",
+        "type":"report",
         "version": "0.0.1"
     },
     "author": [
@@ -23,7 +23,7 @@
     "reference":[
         {
             "name": "Kevin Cyu",
-            "content": "From NCKU, personal website: https://github.com/kevinbird61"
+            "content": "https://github.com/kevinbird61"
         }
     ]
 }
