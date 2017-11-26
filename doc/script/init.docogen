@@ -1,0 +1,61 @@
+{
+    "article": [
+        {
+            "title": "Introduction",
+            "priority": 1,
+            "content": [
+                {
+                    "name": "About our simulation project",
+                    "type": "text",
+                    "data": [
+                        {
+                            "info": "Course of network simulation in NCKU\\cite{NCKU}"
+                        },
+                        {
+                            "info": "For education only."
+                        }
+                    ],
+                    "figure": [
+                        {
+                            "path": "",
+                            "align": "",
+                            "size": ""
+                        }
+                    ],
+                    "subarticle": [
+                        {
+                            "title": "Why we using Docogen as document generator?",
+                            "content": [
+                                {
+                                    "name": "Standalone document generator",
+                                    "type": "text",
+                                    "data": [
+                                        {
+                                            "info": "Edit without insert configuration into your source code."
+                                        },
+                                        {
+                                            "info": "And author is Kevin Cyu\\cite{Kevin Cyu}"
+                                        }
+                                    ],
+                                    "figure": [
+                                        {
+                                            "path": "",
+                                            "align": "",
+                                            "size": ""
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "reference":[
+        {
+            "name": "NCKU",
+            "content": "Nation Cheng Kung University, Tainan, Taiwan"
+        }
+    ]
+}
