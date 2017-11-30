@@ -1,0 +1,27 @@
+{
+    "article": [
+        {
+            "title": "FlowChart",
+            "priority": 2,
+            "content": [
+                {
+                    "name": "That's how our program work",
+                    "type": "figure",
+                    "data": [
+                        {
+                            "path": "../../res/flowchart.png",
+                            "flag": "rel",
+                            "caption": "Video Frame Encoder Simulation",
+                            "size": 1,
+                            "align": "center"
+                        }
+                    ],
+                    "figure": [
+                    ],
+                    "subarticle": [
+                    ]
+                }
+            ]
+        }
+    ]
+}
