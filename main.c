@@ -20,6 +20,7 @@ extern int optind, opterr, optopt;
     float mean: mean value of simulation (need to fetch from user input)
     (queue.h) frame_frac header: buffer queue of encoder
 
+    --- also need to calculated the result, and source -> to calculate "utilization"
 */
 float mean = 0.1,current_sim_time = 0,total_sim_time = 0.0,time_last_event;
 int buffer_size;
@@ -27,6 +28,8 @@ int buffer_size;
 /** ================= define individual process function here =================
 
 */
+void helper(FILE *fp,char *program);
+void init_simulation();
 
 int main(int argc,char *argv[]){
     fprintf(stdout,
@@ -39,10 +42,15 @@ int main(int argc,char *argv[]){
     /* 
         opt:    getopt usage
         flag:   scheduling type usage
+        nums:  how many times we need to run simulation
     */
-    int opt,flag = 0;
-    while((opt = getopt(argc,argv,"b:t:h"))!=-1){
+    int opt,flag = 0,nums=0;
+    while((opt = getopt(argc,argv,"n:b:t:h"))!=-1){
         switch(opt){
+            case 'n':
+                // assign round 
+                nums = atoi(optarg);
+                break;
             case 'b':
                 // buffer size need to plus 1
                 buffer_size = atoi(optarg) + 1;
@@ -51,44 +59,49 @@ int main(int argc,char *argv[]){
                 total_sim_time = atof(optarg);
                 break;
             case 'h':
-                fprintf(stdout,
-                    "Usage: %s [-t time] [-b buffer]\n\n%s\n%s",
-                    argv[0],
-                    "-t time:\tspecify the total simulation time (hours)",
-                    "-b buffer:\tspecify the buffer size\n"
-                    );
+                helper(stdout,argv[0]);
                 exit(1);
                 break;
             default:
-                fprintf(stderr,
-                    "Usage: %s [-t time] [-b buffer]\n\n%s\n%s",
-                    argv[0],
-                    "-t time:\tspecify the total simulation time (hours)",
-                    "-b buffer:\tspecify the buffer size\n"
-                    );
+                helper(stderr,argv[0]);
                 exit(EXIT_FAILURE);
         }
     }
-    printf("Buffer Size=%d\nTotal Simulation time=%f\n",buffer_size,total_sim_time);
+    printf("Number of simulation: %d\nBuffer Size=%d\nTotal Simulation time=%f\n",nums,buffer_size,total_sim_time);
 
     // initialization of queue
-    init();
+    init_simulation();
     // create and push the top/bot field
     while(current_sim_time < total_sim_time){
         float t = expon(mean);
-        if(get_size() > buffer_size){
+        if(get_size(event_queue) > buffer_size){
             printf("At time: %f, Buffer overflow occurred!\n",current_sim_time);
             break;
         }
-        create_and_push(flag,t);
+        create_and_push(event_queue,flag,t);
         current_sim_time += t;
         flag = !flag;
     }
 
     // Get buffer size
-    printf("Buffer Size: %d\n",get_size());
+    printf("Buffer Size: %d\n",get_size(event_queue));
     // print for debugging
-    print_all();
+    print_all(event_queue);
 
     return 0;
+}
+
+void init_simulation(){
+    // initialize the queue usage
+    init();
+}
+
+void helper(FILE *fp,char *program){
+    fprintf(fp,
+        "Usage: %s [-t time] [-b buffer]\n\n%s\n%s\n%s\n",
+        program,
+        "-n nums:\tspecify how many times you want to run the simulation routine",
+        "-t time:\tspecify the total simulation time (hours)",
+        "-b buffer:\tspecify the buffer size\n"
+        );
 }

@@ -3,14 +3,24 @@
 // initialization
 void init(){
     // initialize header
-    frame_frac *tmp = (frame_frac*)malloc(sizeof(frame_frac)*1);
+    frame_frac *tmp = (frame_frac*)malloc(sizeof(frame_frac)*1),
+        *tmp2 = (frame_frac*)malloc(sizeof(frame_frac)*1),
+        *tmp3 = (frame_frac*)malloc(sizeof(frame_frac)*1);
     tmp->parent = NULL;
+    tmp2->parent = NULL;
+    tmp3->parent = NULL;
     tmp->child = NULL;
-    header = tmp;
+    tmp2->child = NULL;
+    tmp3->child = NULL;
+
+    // assign header
+    event_queue = tmp;
+    buffer_queue = tmp2;
+    storage_queue = tmp3;
 }
 
 // provide creating function for easy usage
-int create_and_push(int type, inter_t timestamp){
+int create_and_push(frame_frac *ptr,int type, inter_t timestamp){
     // create new element
     frame_frac *new_ele = (frame_frac*)malloc(sizeof(frame_frac)*1);
     new_ele->type = type;
@@ -21,15 +31,16 @@ int create_and_push(int type, inter_t timestamp){
     new_ele->parent = NULL;
 
     // push
-    push(new_ele);
+    push(ptr,new_ele);
     
     return 0;
 }
 
 // push new element into queue
-int push(frame_frac *element){
+int push(frame_frac *ptr,frame_frac *element){
+    // ptr is the header we want
     frame_frac *traversal,*parent;
-    traversal = header;
+    traversal = ptr;
     while(traversal->child != NULL){
         parent = traversal;
         traversal = traversal->child;
@@ -38,19 +49,18 @@ int push(frame_frac *element){
     // parent & child
     traversal->parent = parent;
     traversal->child = element;
-
     return 0;
 }
 
 // For the piece which need to go "encoder"
-frame_frac *pop(){
+frame_frac *pop(frame_frac *ptr){
     // tmp 
     frame_frac *element;
     // fetch first element
-    element = header->child;
+    element = ptr->child;
     // reset header
-    header->child = element->child;
-    element->child->parent = header;
+    ptr->child = element->child;
+    element->child->parent = ptr;
     // cut all link, purge element from list
     element->parent=NULL;
     element->child=NULL;
@@ -59,9 +69,9 @@ frame_frac *pop(){
 }
 
 // For the piece which need to be drop out
-frame_frac *pop_back(){
+frame_frac *pop_back(frame_frac *ptr){
     frame_frac *traversal,*parent;
-    traversal = header;
+    traversal = ptr;
     while(traversal->child != NULL){
         parent = traversal;
         traversal = traversal->child;
@@ -74,9 +84,9 @@ frame_frac *pop_back(){
 }
 
 // Print all node from header list
-void print_all(){
+void print_all(frame_frac *ptr){
     frame_frac *traversal;
-    traversal = header->child;
+    traversal = ptr->child;
     while(traversal != NULL){
         print_node(traversal);
         traversal = traversal->child;
@@ -84,10 +94,10 @@ void print_all(){
 }
 
 // Get size of header
-int get_size(){
+int get_size(frame_frac *ptr){
     int size=0;
     frame_frac *traversal;
-    traversal = header->child;
+    traversal = ptr->child;
     while(traversal != NULL){
         traversal = traversal->child;
         size++;
