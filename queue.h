@@ -11,7 +11,6 @@
 #define TOP_SIZE 1
 #define BOT_SIZE 2
 #define field_size(type) (type==0)?TOP_SIZE:BOT_SIZE;
-
 // define queue structure/operator
 frame_frac *header;
 

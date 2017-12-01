@@ -29,6 +29,13 @@ int buffer_size;
 */
 
 int main(int argc,char *argv[]){
+    fprintf(stdout,
+        "\n%s\n%s\n%s\n%s\n\n",
+        "Simulation:",
+        "Type 1: bottom field",
+        "Type 0: top field",
+        "==================================="
+        );
     /* 
         opt:    getopt usage
         flag:   scheduling type usage
@@ -65,7 +72,7 @@ int main(int argc,char *argv[]){
     printf("Buffer Size=%d\nTotal Simulation time=%f\n",buffer_size,total_sim_time);
 
     // initialization of queue
-    init(buffer_size);
+    init();
     // create and push the top/bot field
     while(current_sim_time < total_sim_time){
         float t = expon(mean);

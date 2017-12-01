@@ -97,5 +97,5 @@ int get_size(){
 
 // Print each node on header list
 void print_node(frame_frac *p){
-    printf("Type: %d, Size: %d, timestamp: %f\n",p->type,p->size,(float)p->timestamp);
+    printf("Type: %s, Size: %d, timestamp: %f\n",(p->type==0)?"top":"bot",p->size,(float)p->timestamp);
 }
