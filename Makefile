@@ -10,7 +10,7 @@ all: $(EXEC).c $(OBJS)
 	$(CXX) -c $^
 
 run:
-	./$(EXEC) -t 8 -n 20
+	./$(EXEC) -t 8 -b 20
 
 docogen:
 	cd doc/ && npm install && node doc.js

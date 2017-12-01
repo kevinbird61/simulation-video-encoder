@@ -6,7 +6,6 @@
 #include <getopt.h>
 #include <math.h>
 #include "lcgrand.h"
-#include "state_var.h"
 #include "random_gen.h"
 #include "queue.h"
 
@@ -39,9 +38,9 @@ int main(int argc,char *argv[]){
     int opt;
     int nsecs, tfnd;
 
-    while((opt = getopt(argc,argv,"n:t:h"))!=-1){
+    while((opt = getopt(argc,argv,"b:t:h"))!=-1){
         switch(opt){
-            case 'n':
+            case 'b':
                 // buffer size need to plus 1
                 buffer_size = atoi(optarg) + 1;
                 break;
@@ -50,30 +49,31 @@ int main(int argc,char *argv[]){
                 break;
             case 'h':
                 fprintf(stdout,
-                    "Usage: %s [-t time] [-n number]\n"
-                    ,argv[0]);
+                    "Usage: %s [-t time] [-b buffer]\n\n%s\n%s",
+                    argv[0],
+                    "-t time:\tspecify the total simulation time (hours)",
+                    "-b buffer:\tspecify the buffer size\n"
+                    );
                 exit(1);
                 break;
             default:
-                fprintf(stderr,"Usage: %s [-t time] [-n number]\n",argv[0]);
+                fprintf(stderr,"Usage: %s [-t time] [-b buffer]\n",argv[0]);
                 exit(EXIT_FAILURE);
         }
     }
 
     printf("Buffer Size=%d\nTotal Simulation time=%f\n",buffer_size,total_sim_time);
 
-    frame_frac pieces[10];
+    // initialization of queue
+    init();
 
+    // create and push the top/bot field
     for(int i=0;i<10;i++){
-        pieces[i].type = i%2;
-        pieces[i].size = field_size(i%2);
-        pieces[i].timestamp = expon(mean);
+        create_and_push(i%2,expon(mean));
     }
 
-    for(int i=0;i<10;i++)
-        printf("%d,size=%d,time=%f\n",pieces[i].type,pieces[i].size,pieces[i].timestamp);
-    
-    init();
+    // print for debugging
+    print_all();
 
     return 0;
 }
