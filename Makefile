@@ -1,15 +1,22 @@
 EXEC:=main
+OBJS:=lcgrand.o random_gen.o queue.o
+CXX=gcc
+CFLAGS=-lm -std=c11
 
-$(EXEC): lcgrand.h state_var.h random_gen.h
-	gcc -o lcgrand.o -c lcgrand.c
-	gcc -o random_gen.o -c random_gen.c
-	gcc $(EXEC).c lcgrand.o random_gen.o state_var.h -o $(EXEC) -lm
+all: $(EXEC).c $(OBJS)
+	$(CXX) $^ -o $(EXEC) $(CFLAGS)
+
+%.o: %.c %.h
+	$(CXX) -c $^
+
+run:
+	./$(EXEC) -t 8 -n 20
 
 docogen:
 	cd doc/ && npm install && node doc.js
 
 clean:
-	rm *.o $(EXEC)
+	rm *.o $(EXEC) *.gch
 
 cleandoc:
 	rm -rf doc/node_modules/

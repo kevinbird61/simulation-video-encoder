@@ -15,9 +15,9 @@ typedef struct frame_piece {
     int type;
     int size;
     inter_t timestamp;
+    // for link-list
+    struct frame_piece *parent;
+    struct frame_piece *child;
 } frame_frac;
-
-// simulation duration
-int sim_duration = 8;
 
 #endif
