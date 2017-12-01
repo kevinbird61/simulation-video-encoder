@@ -11,7 +11,21 @@
                         {
                             "path": "../../res/flowchart.png",
                             "flag": "rel",
-                            "caption": "Video Frame Encoder Simulation",
+                            "caption": "Entire system",
+                            "size": 1,
+                            "align": "center"
+                        },
+						{
+                            "path": "../../res/initial.png",
+                            "flag": "rel",
+                            "caption": "Initial routine + Encoder",
+                            "size": 1,
+                            "align": "center"
+                        },
+						{
+                            "path": "../../res/encoder.png",
+                            "flag": "rel",
+                            "caption": "Encoder + Storage server",
                             "size": 1,
                             "align": "center"
                         }
