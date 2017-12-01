@@ -19,6 +19,7 @@ frame_frac *header;
 void init();
 int create_and_push(int type, inter_t timestamp);
 int push(frame_frac *element);
+int get_size();
 frame_frac *pop();
 frame_frac *pop_back();
 void print_all();

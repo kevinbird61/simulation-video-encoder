@@ -14,30 +14,26 @@ extern int optind, opterr, optopt;
 
 /** ================= define global state variable for simulation =================
 
-    float sim_time: system simulation clock
+    float current_sim_time: system simulation clock
     float time_last_event: 
     int buffer_size: encoder buffer size (need to fetch from user input)
     float mean: mean value of simulation (need to fetch from user input)
-    frame_frac buffer_queue: buffer queue of encoder
+    (queue.h) frame_frac header: buffer queue of encoder
 
 */
-float mean = 0.1,sim_time = 0,time_last_event;
-
-float total_sim_time = 0.0;
+float mean = 0.1,current_sim_time = 0,total_sim_time = 0.0,time_last_event;
 int buffer_size;
 
 /** ================= define individual process function here =================
 
-    float schedule_top();
-    float schedule_bot();
 */
 
-
 int main(int argc,char *argv[]){
-
-    int opt;
-    int nsecs, tfnd;
-
+    /* 
+        opt:    getopt usage
+        flag:   scheduling type usage
+    */
+    int opt,flag = 0;
     while((opt = getopt(argc,argv,"b:t:h"))!=-1){
         switch(opt){
             case 'b':
@@ -57,21 +53,33 @@ int main(int argc,char *argv[]){
                 exit(1);
                 break;
             default:
-                fprintf(stderr,"Usage: %s [-t time] [-b buffer]\n",argv[0]);
+                fprintf(stderr,
+                    "Usage: %s [-t time] [-b buffer]\n\n%s\n%s",
+                    argv[0],
+                    "-t time:\tspecify the total simulation time (hours)",
+                    "-b buffer:\tspecify the buffer size\n"
+                    );
                 exit(EXIT_FAILURE);
         }
     }
-
     printf("Buffer Size=%d\nTotal Simulation time=%f\n",buffer_size,total_sim_time);
 
     // initialization of queue
-    init();
-
+    init(buffer_size);
     // create and push the top/bot field
-    for(int i=0;i<10;i++){
-        create_and_push(i%2,expon(mean));
+    while(current_sim_time < total_sim_time){
+        float t = expon(mean);
+        if(get_size() > buffer_size){
+            printf("At time: %f, Buffer overflow occurred!\n",current_sim_time);
+            break;
+        }
+        create_and_push(flag,t);
+        current_sim_time += t;
+        flag = !flag;
     }
 
+    // Get buffer size
+    printf("Buffer Size: %d\n",get_size());
     // print for debugging
     print_all();
 
