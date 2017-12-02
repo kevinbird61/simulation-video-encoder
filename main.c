@@ -21,12 +21,13 @@ extern int optind, opterr, optopt;
     (queue.h) frame_frac header: buffer queue of encoder
 
     --- also need to calculated the result, and source -> to calculate "utilization"
-    drop_c:         dropping counter
-    drop_filter:   controlling dropping mechanism
-    frame_c:        completed frame counter, each of frame contain 2 pieces
+    drop_c:                 dropping counter
+    drop_filter:            controlling dropping mechanism
+    input_video_pieces:     input video pieces counter
+    output_video_pieces:    output video pieces counter
 */
 float mean = 0.1,current_sim_time = 0,total_sim_time = 0.0,time_last_event=0.0;
-int buffer_size,drop_c=0,frame_c=0,drop_filter=-1;
+int buffer_size,drop_c=0,frame_c=0,drop_filter=-1,input_video_pieces=0,output_video_pieces=0;
 
 /** ================= define individual process function here =================
     helper:             printing the usage information
@@ -39,14 +40,16 @@ void init_simulation();
 int check_buffer();
 void schedule(int type); 
 void dropping(int type);
-void completing();
 
 int main(int argc,char *argv[]){
     fprintf(stdout,
-        "\n%s\n%s\n%s\n%s\n\n",
+        "\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n\n",
         "Simulation:",
         "Type 1: bottom field",
         "Type 0: top field",
+        "Type 2: encoded top field arrival",
+        "Type 3: encoded bottom field arrival",
+        "Type 4: leaving event",
         "==================================="
         );
     /* 
@@ -83,52 +86,79 @@ int main(int argc,char *argv[]){
     init_simulation();
     // base on event queue to do simulation
     while(current_sim_time < total_sim_time){
+        print_all(event_queue);
         // pop out event from event queue
         frame_frac *e = pop(event_queue);
-
+        // interpret the type of this event
         switch(e->type){
             case 0:
                 // top arrival -> check first, then schedule bot
                 if(check_buffer()){
                     // overflow
                     dropping(0);
+                    // inc 
+                    // drop_c++;
                 }
                 else{
                     // push into buffer queue
                     create_and_push(buffer_queue,0,e->timestamp);
                 }
+                // Then schedule bot arrival
                 schedule(1);
+                // inc counter
+                input_video_pieces++;
             break;
             case 1:
+                // schedule the next top arrival event
+                schedule(0);
                 // bot arrival -> check first, then schedule top
                 if(check_buffer()){
-                    // do nothing
+                    // overflow -> pop out the last element in buffer queue
                     dropping(1);
+                    // inc 
+                    // drop_c++;
                 }
                 else{
+                    // Checking this bot's top is discard or not
                     if(drop_filter == 1){
                         // no need to push, set drop_filter back to -1
                         drop_filter = -1;
+                        // inc 
+                        // drop_c++;
                     }
                     else{
+                        // Its matching top is save
                         create_and_push(buffer_queue,1,e->timestamp);
+                        // schedule encode matching top, bot arrival (because available bottom can schedule a pair encoded frame arrival)
+                        schedule(2);
                     }
                 }
-                schedule(0);
-                // encode matching top, bot
-                schedule(2);
-                schedule(3);
+                input_video_pieces++;
             break;
             case 2:
-                // encoded top arrival -> do nothing
+                // encoded top arrival -> push the element in storage server
+                push(storage_queue,e);
+                schedule(3);
             break;
             case 3:
                 // encoded bot arrival -> do nothing
                 // schedule one leaving event -> frame completed
+                push(storage_queue,e);
                 schedule(4);
             break;
             case 4:
                 // need to add up completed frame number
+                if(get_size(storage_queue) < 2){
+                    printf("Invalid leaving event arrival!\n");
+                    exit(1);
+                }
+                else{
+                    // FIXME: need to free!
+                    // pop(storage_queue);
+                    // pop(storage_queue);
+                    // add the counter 
+                    output_video_pieces += 2;
+                }
             break;
             case 99:
                 // for debugging dummy event, just pass through simulation clock
@@ -136,38 +166,23 @@ int main(int argc,char *argv[]){
             default:
                 printf("Invalid event!\n");
         }
-        current_sim_time += (float)e->timestamp;
-        // Get buffer size
-        printf("Event list size: %d\n",get_size(event_queue));
-        // print for debugging
-        print_all(event_queue);
+        
+        // update current simulation clock
+        current_sim_time = (float)e->timestamp;
     }
-
-    // testing: create and push the top/bot field
-    /*while(current_sim_time < total_sim_time){
-        float t = expon(mean);
-        if(get_size(event_queue) > buffer_size){
-            printf("At time: %f, Buffer overflow occurred!\n",current_sim_time);
-            break;
-        }
-        create_and_push(event_queue,flag,t);
-        current_sim_time += t;
-        flag = !flag;
-    }*/
-
-    // drop all existed memory usage
+    printf("Current simulation time: %f;\tTotal simulation time %f\n",current_sim_time,total_sim_time);
+    printf("Total arrival pieces(top,bot): %d\n",input_video_pieces);
+    printf("Total dropping pieces: %d\n",drop_c);
+    printf("Output frame pieces(result top,bot): %d\n",output_video_pieces);
+    // free all existed memory usage
     drop_all();
-
-    // create_and_push(event_queue,flag,expon(mean));
-    // print_all(event_queue);
-
     return 0;
 }
 
 void schedule(int type){
     float t = expon(mean);
-    // need to do increasing size of buffer size/ storage size
-    create_and_push(event_queue,type,expon(mean));
+    // create & push & sort by timestamp
+    create_push_sort(event_queue,type,current_sim_time+t);
 }
 
 void dropping(int type){
@@ -185,7 +200,6 @@ void dropping(int type){
             printf("Invalid dropping type, ignore!");
     }
 }
-void completing();
 
 int check_buffer(){
     if(get_size(buffer_queue) >= buffer_size){
@@ -201,8 +215,9 @@ void init_simulation(){
     current_sim_time=0;
     time_last_event=0;
     drop_c=0;
-    frame_c=0;
-    // push an top field arrival as starting state
+    input_video_pieces=0;
+    output_video_pieces=0;
+    // push a pair field arrivals as starting state
     schedule(0);
     schedule(1);
 }

@@ -57,6 +57,50 @@ int create_and_push(frame_frac *ptr,int type, inter_t timestamp){
     return 0;
 }
 
+int create_push_sort(frame_frac *ptr,int type, inter_t timestamp){
+    // create new element
+    frame_frac *new_ele = (frame_frac*)malloc(sizeof(frame_frac)*1);
+    new_ele->type = type;
+    // using MACRO 
+    new_ele->size = field_size(type);
+    new_ele->timestamp = timestamp;
+    new_ele->child = NULL;
+    new_ele->parent = NULL;
+
+    // push
+    if(get_size(ptr) >= 1){
+        push_sort(ptr,new_ele);
+        // push(ptr,new_ele);
+    }
+    else{
+        push(ptr,new_ele);
+    }
+    
+    return 0;
+}
+
+int push_sort(frame_frac *ptr,frame_frac *element){
+    // ptr is the header we want
+    frame_frac *traversal,*parent;
+    traversal = ptr->child;
+    parent = ptr;
+    while(traversal != NULL){
+        // sort with timestamp 
+        if(element->timestamp < traversal->timestamp){
+            parent->child = element;
+            element->parent = parent;
+            element->child = traversal;
+            traversal->parent = element;
+            return 0;
+        }
+        parent = traversal;
+        traversal = traversal->child;
+    }
+    // if this element seems to have biggest timestamp, then just append it to the end of queue
+    parent->child = element;
+    return 0;
+}
+
 // push new element into queue
 int push(frame_frac *ptr,frame_frac *element){
     // ptr is the header we want
