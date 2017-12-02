@@ -19,6 +19,28 @@ void init(){
     storage_queue = tmp3;
 }
 
+// drop all existed queue
+void drop(frame_frac *ptr){
+    frame_frac *d_ptr;
+    // free every node
+    while(ptr!=NULL){
+        d_ptr=ptr;
+        ptr=ptr->child;
+        d_ptr->child=NULL;
+        d_ptr->parent=NULL;
+        free(d_ptr);
+    }
+}
+
+void drop_all(){
+    // drop event queue
+    drop(event_queue);
+    // drop buffer queue
+    drop(buffer_queue);
+    // drop storage queue
+    drop(storage_queue);
+}
+
 // provide creating function for easy usage
 int create_and_push(frame_frac *ptr,int type, inter_t timestamp){
     // create new element
@@ -32,7 +54,6 @@ int create_and_push(frame_frac *ptr,int type, inter_t timestamp){
 
     // push
     push(ptr,new_ele);
-    
     return 0;
 }
 
@@ -85,12 +106,17 @@ frame_frac *pop_back(frame_frac *ptr){
 
 // Print all node from header list
 void print_all(frame_frac *ptr){
+    if(get_size(ptr)==0){
+        printf("Empty queue!");
+        return;
+    }
     frame_frac *traversal;
     traversal = ptr->child;
     while(traversal != NULL){
         print_node(traversal);
         traversal = traversal->child;
     }
+    printf("Printing process end.\n\n");
 }
 
 // Get size of header
@@ -107,5 +133,38 @@ int get_size(frame_frac *ptr){
 
 // Print each node on header list
 void print_node(frame_frac *p){
-    printf("Type: %s, Size: %d, timestamp: %f\n",(p->type==0)?"top":"bot",p->size,(float)p->timestamp);
+    char *type;
+    switch(p->type){
+        case 0:
+            type = malloc(sizeof(char)*4);
+            strcpy(type,"top");
+        break;
+        case 1:
+            type = malloc(sizeof(char)*4);
+            strcpy(type,"bot");
+        break;
+        case 2:
+            type = malloc(sizeof(char)*12);
+            strcpy(type,"encoded top");
+        break;
+        case 3:
+            type = malloc(sizeof(char)*12);
+            strcpy(type,"encoded bot");
+        break;
+        case 4:
+            type = malloc(sizeof(char)*6);
+            strcpy(type,"leave");
+        break;
+        case 99:
+            type = malloc(sizeof(char)*6);
+            strcpy(type,"dummy");
+        break;
+        default:
+            printf("Invalid event!\n");
+    }
+
+    // Print result
+    printf("Type: %s, Size: %d, timestamp: %f\n",type,p->size,(float)p->timestamp);
+    // free
+    free(type);
 }

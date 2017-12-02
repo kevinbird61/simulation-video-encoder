@@ -21,15 +21,25 @@ extern int optind, opterr, optopt;
     (queue.h) frame_frac header: buffer queue of encoder
 
     --- also need to calculated the result, and source -> to calculate "utilization"
+    drop_c:         dropping counter
+    drop_filter:   controlling dropping mechanism
+    frame_c:        completed frame counter, each of frame contain 2 pieces
 */
-float mean = 0.1,current_sim_time = 0,total_sim_time = 0.0,time_last_event;
-int buffer_size;
+float mean = 0.1,current_sim_time = 0,total_sim_time = 0.0,time_last_event=0.0;
+int buffer_size,drop_c=0,frame_c=0,drop_filter=-1;
 
 /** ================= define individual process function here =================
-
+    helper:             printing the usage information
+    init_simulation:    initialize the simulation routine
+    check_buffer:       checking the buffer size, whether it's available or not, then do schedule
+    schedule:           base on its type to push event into event queue -> increase queue length, and increase simulation time
 */
 void helper(FILE *fp,char *program);
 void init_simulation();
+int check_buffer();
+void schedule(int type); 
+void dropping(int type);
+void completing();
 
 int main(int argc,char *argv[]){
     fprintf(stdout,
@@ -71,8 +81,70 @@ int main(int argc,char *argv[]){
 
     // initialization of queue
     init_simulation();
-    // create and push the top/bot field
+    // base on event queue to do simulation
     while(current_sim_time < total_sim_time){
+        // pop out event from event queue
+        frame_frac *e = pop(event_queue);
+
+        switch(e->type){
+            case 0:
+                // top arrival -> check first, then schedule bot
+                if(check_buffer()){
+                    // overflow
+                    dropping(0);
+                }
+                else{
+                    // push into buffer queue
+                    create_and_push(buffer_queue,0,e->timestamp);
+                }
+                schedule(1);
+            break;
+            case 1:
+                // bot arrival -> check first, then schedule top
+                if(check_buffer()){
+                    // do nothing
+                    dropping(1);
+                }
+                else{
+                    if(drop_filter == 1){
+                        // no need to push, set drop_filter back to -1
+                        drop_filter = -1;
+                    }
+                    else{
+                        create_and_push(buffer_queue,1,e->timestamp);
+                    }
+                }
+                schedule(0);
+                // encode matching top, bot
+                schedule(2);
+                schedule(3);
+            break;
+            case 2:
+                // encoded top arrival -> do nothing
+            break;
+            case 3:
+                // encoded bot arrival -> do nothing
+                // schedule one leaving event -> frame completed
+                schedule(4);
+            break;
+            case 4:
+                // need to add up completed frame number
+            break;
+            case 99:
+                // for debugging dummy event, just pass through simulation clock
+            break;
+            default:
+                printf("Invalid event!\n");
+        }
+        current_sim_time += (float)e->timestamp;
+        // Get buffer size
+        printf("Event list size: %d\n",get_size(event_queue));
+        // print for debugging
+        print_all(event_queue);
+    }
+
+    // testing: create and push the top/bot field
+    /*while(current_sim_time < total_sim_time){
         float t = expon(mean);
         if(get_size(event_queue) > buffer_size){
             printf("At time: %f, Buffer overflow occurred!\n",current_sim_time);
@@ -81,19 +153,58 @@ int main(int argc,char *argv[]){
         create_and_push(event_queue,flag,t);
         current_sim_time += t;
         flag = !flag;
+    }*/
+
+    // drop all existed memory usage
+    drop_all();
+
+    // create_and_push(event_queue,flag,expon(mean));
+    // print_all(event_queue);
+
+    return 0;
+}
+
+void schedule(int type){
+    float t = expon(mean);
+    // need to do increasing size of buffer size/ storage size
+    create_and_push(event_queue,type,expon(mean));
+}
+
+void dropping(int type){
+    // input type is current arrival event during buffer overflow
+    switch(type){
+        case 0:
+            // incoming event is top field, also need to drop its following bot field
+            drop_filter = 1; // next time when bot field coming -> drop
+        break;
+        case 1:
+            // incoming event is bot field, need to pop out the buffer queue from the back
+            pop_back(buffer_queue);
+        break;
+        default:
+            printf("Invalid dropping type, ignore!");
     }
+}
+void completing();
 
-    // Get buffer size
-    printf("Buffer Size: %d\n",get_size(event_queue));
-    // print for debugging
-    print_all(event_queue);
-
+int check_buffer(){
+    if(get_size(buffer_queue) >= buffer_size){
+        return 1;
+    }
     return 0;
 }
 
 void init_simulation(){
     // initialize the queue usage
     init();
+    // reset statistic counter
+    current_sim_time=0;
+    time_last_event=0;
+    drop_c=0;
+    frame_c=0;
+    // push an top field arrival as starting state
+    schedule(0);
+    schedule(1);
 }
 
 void helper(FILE *fp,char *program){

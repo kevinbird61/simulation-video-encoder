@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <unistd.h>
 #include "state_var.h"
 
@@ -22,6 +23,8 @@ frame_frac *storage_queue;
 
 // operator
 void init();
+void drop(frame_frac *ptr);
+void drop_all();
 int create_and_push(frame_frac *ptr,int type, inter_t timestamp);
 int push(frame_frac *ptr,frame_frac *element);
 int get_size(frame_frac *ptr);
