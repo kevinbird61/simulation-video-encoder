@@ -18,7 +18,7 @@ $(OBJDIR):
 	mkdir -p $@
 
 run: all
-	./$(EXEC) -n 1 -t 8 -b 20
+	./$(EXEC) -n 1 -t 8 -b 20 -a 0.1 -f 0.01668335001 -c 265.5
 
 proj: all $(OBJDIR)
 	./$(EXEC) -n 1 -t 8 -b 20 > $(OBJDIR)/buffer20.txt
@@ -35,7 +35,7 @@ docogen:
 
 clean:
 	rm *.o $(EXEC) *.gch 
-	rm -rf result/
+	rm -rf $(OBJDIR)/
 
 cleandoc:
 	rm -rf doc/node_modules/

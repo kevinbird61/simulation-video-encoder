@@ -28,6 +28,20 @@
                             "caption": "Encoder + Storage server",
                             "size": 1,
                             "align": "center"
+                        },
+						{
+                            "path": "../../res/sim.png",
+                            "flag": "rel",
+                            "caption": "Simulation graph of project",
+                            "size": 1,
+                            "align": "center"
+                        },
+						{
+                            "path": "../../res/queue.png",
+                            "flag": "rel",
+                            "caption": "Memory usage(Queue)",
+                            "size": 1,
+                            "align": "center"
                         }
                     ],
                     "figure": [

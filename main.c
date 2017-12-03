@@ -10,7 +10,7 @@
 #include "queue.h"
 
 // 1hr=60min * 60sec
-#define TIME_SCALE 60
+#define TIME_SCALE 3600
 
 extern char *optarg;
 extern int optind, opterr, optopt;
@@ -28,10 +28,16 @@ extern int optind, opterr, optopt;
     drop_filter:            controlling dropping mechanism
     input_video_pieces:     input video pieces counter
     output_video_pieces:    output video pieces counter
+    alpha:                  storage process parameter
+    param_f:                parameter for field arrival time
+    param_c:                parameter for complexity of field size
+    Cenc:                   capacity of encoder (fobs/secs)
+    Cstorage:               capacity of storage server (bytes/secs)
 */
 float mean = 0.1,current_sim_time = 0,total_sim_time = 0.0,time_last_event=0.0;
+float alpha=0.0,param_f=0.0,param_c=0.0;
 int buffer_size,drop_c=0,frame_c=0,drop_filter=-1,input_video_pieces=0,output_video_pieces=0;
-
+int Cenc=15800,Cstorage=1600;
 /** ================= define individual process function here =================
     helper:             printing the usage information
     init_simulation:    initialize the simulation routine
@@ -56,13 +62,16 @@ int main(int argc,char *argv[]){
         "==================================="
         );
     /* 
-        opt:    getopt usage
-        flag:   scheduling type usage
-        nums:  how many times we need to run simulation
+        opt:        getopt usage
+        flag:       scheduling type usage
+        nums:       how many times we need to run simulation
+        last_size:  record previous arrival size 
+        h1:         top field size 
+        h2:         bottom field size
     */
     int opt,flag = 0,nums=0;
-    float last_size=0.0;
-    while((opt = getopt(argc,argv,"n:b:t:h"))!=-1){
+    float last_size=0.0,h1=0.0,h2=0.0;
+    while((opt = getopt(argc,argv,"n:b:t:a:e:s:f:c:h"))!=-1){
         switch(opt){
             case 'n':
                 // assign round 
@@ -75,6 +84,26 @@ int main(int argc,char *argv[]){
             case 't':
                 total_sim_time = atof(optarg)*TIME_SCALE;
                 break;
+            case 'a':
+                // get alpha
+                alpha = atof(optarg);
+                break; 
+            case 'e':
+                // get Cenc
+                Cenc = atoi(optarg);
+                break;
+            case 's':
+                // get Cstorage
+                Cstorage = atoi(optarg);
+                break;
+            case 'f':
+                // get param1
+                param_f = atof(optarg);
+                break;
+            case 'c':
+                // get param2
+                param_c = atof(optarg);
+                break;
             case 'h':
                 helper(stdout,argv[0]);
                 exit(1);
@@ -85,12 +114,13 @@ int main(int argc,char *argv[]){
         }
     }
     printf("Number of simulation: %d\nBuffer Size=%d\nTotal Simulation time=%f\n",nums,buffer_size,total_sim_time);
-
+    printf("Parameter:\n\tAlpha: %f\n\tCenc: %d(fobs/secs)\n\tCstorage: %d(bytes/secs)\n\tParam_f: %f\n\tParam_c: %f\n",
+            alpha,Cenc,Cstorage,param_f,param_c);
     // initialization of queue
     init_simulation();
     // base on event queue to do simulation
     while(current_sim_time < total_sim_time){
-        // print_all(event_queue);
+        //print_all(event_queue);
         // print_all(buffer_queue);
         // pop out event from event queue
         frame_frac *e = pop(event_queue);
@@ -194,8 +224,10 @@ void schedule(int type,float inherit_size){
     // create & push & sort by timestamp
     if(type == 1 || type == 0)
         create_push_sort(event_queue,type,expon(0.1),current_sim_time+t);
-    else if(type == 2 || type == 3)
-        create_push_sort(event_queue,type,inherit_size,current_sim_time+50*expon(inherit_size));
+    else if(type == 2 || type == 3){
+        // create_push_sort(event_queue,type,inherit_size,current_sim_time+50*expon(inherit_size));
+        create_push_sort(event_queue,type,inherit_size,current_sim_time+expon(265.5));
+    }
     else 
         create_push_sort(event_queue,type,expon(0.1),current_sim_time+t);
 }
@@ -240,10 +272,15 @@ void init_simulation(){
 
 void helper(FILE *fp,char *program){
     fprintf(fp,
-        "Usage: %s [-t time] [-b buffer]\n\n%s\n%s\n%s\n",
+        "Usage: %s [-t time] [-b buffer] [-n nums] [-a alpha] [-e Cenc] [-s Cs] [-f param1] [-c param2]\n\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n",
         program,
-        "-n nums:\tspecify how many times you want to run the simulation routine",
-        "-t time:\tspecify the total simulation time (hours)",
-        "-b buffer:\tspecify the buffer size\n"
+        "  -n nums:\tspecify how many times you want to run the simulation routine",
+        "  -t time:\tspecify the total simulation time (hours)",
+        "  -b buffer:\tspecify the buffer size",
+        "  -a alpha:\tspecify the parameter of storage process",
+        "  -e Cenc:\tspecify the encoding speed of encoder",
+        "  -s Cstorage:\tspecify the storaging speed of storage server",
+        "  -f param1:\tspecify the parameter of time between field arrival(secs)",
+        "  -c param2:\tspecify the parameter of complexity of a field(fods)\n"
         );
 }
