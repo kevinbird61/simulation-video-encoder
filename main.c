@@ -154,8 +154,8 @@ int main(int argc,char *argv[]){
                 }
                 else{
                     // FIXME: need to free!
-                    // pop(storage_queue);
-                    // pop(storage_queue);
+                    pop(storage_queue);
+                    pop(storage_queue);
                     // add the counter 
                     output_video_pieces += 2;
                 }
@@ -217,9 +217,8 @@ void init_simulation(){
     drop_c=0;
     input_video_pieces=0;
     output_video_pieces=0;
-    // push a pair field arrivals as starting state
-    schedule(0);
-    schedule(1);
+    // push the top field into queue at time 0
+    create_push_sort(event_queue,0,0);
 }
 
 void helper(FILE *fp,char *program){

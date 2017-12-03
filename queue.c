@@ -121,11 +121,12 @@ int push(frame_frac *ptr,frame_frac *element){
 frame_frac *pop(frame_frac *ptr){
     // tmp 
     frame_frac *element;
-    // fetch first element
+    // fetch first element (need to skip header -> empty pieces)
     element = ptr->child;
     // reset header
     ptr->child = element->child;
-    element->child->parent = ptr;
+    if(element->child != NULL)
+        element->child->parent = ptr;
     // cut all link, purge element from list
     element->parent=NULL;
     element->child=NULL;
