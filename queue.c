@@ -46,8 +46,8 @@ int create_and_push(frame_frac *ptr,int type, inter_t timestamp){
     // create new element
     frame_frac *new_ele = (frame_frac*)malloc(sizeof(frame_frac)*1);
     new_ele->type = type;
-    // using MACRO 
-    new_ele->size = field_size(type);
+    // using random -> FIXME: mean
+    new_ele->size = expon(0.1);
     new_ele->timestamp = timestamp;
     new_ele->child = NULL;
     new_ele->parent = NULL;
@@ -57,12 +57,12 @@ int create_and_push(frame_frac *ptr,int type, inter_t timestamp){
     return 0;
 }
 
-int create_push_sort(frame_frac *ptr,int type, inter_t timestamp){
+int create_push_sort(frame_frac *ptr,int type, float size, inter_t timestamp){
     // create new element
     frame_frac *new_ele = (frame_frac*)malloc(sizeof(frame_frac)*1);
     new_ele->type = type;
     // using MACRO 
-    new_ele->size = field_size(type);
+    new_ele->size = size;
     new_ele->timestamp = timestamp;
     new_ele->child = NULL;
     new_ele->parent = NULL;
@@ -152,7 +152,7 @@ frame_frac *pop_back(frame_frac *ptr){
 // Print all node from header list
 void print_all(frame_frac *ptr){
     if(get_size(ptr)==0){
-        printf("Empty queue!");
+        printf("Empty queue!\n");
         return;
     }
     frame_frac *traversal;
@@ -209,7 +209,7 @@ void print_node(frame_frac *p){
     }
 
     // Print result
-    printf("Type: %s, Size: %d, timestamp: %f\n",type,p->size,(float)p->timestamp);
+    printf("Type: %s, Size: %f, timestamp: %f\n",type,p->size,(float)p->timestamp);
     // free
     free(type);
 }

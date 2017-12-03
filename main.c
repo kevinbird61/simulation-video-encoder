@@ -9,6 +9,9 @@
 #include "random_gen.h"
 #include "queue.h"
 
+// 1hr=60min * 60sec
+#define TIME_SCALE 60
+
 extern char *optarg;
 extern int optind, opterr, optopt;
 
@@ -38,7 +41,7 @@ int buffer_size,drop_c=0,frame_c=0,drop_filter=-1,input_video_pieces=0,output_vi
 void helper(FILE *fp,char *program);
 void init_simulation();
 int check_buffer();
-void schedule(int type); 
+void schedule(int type,float inherit_size); 
 void dropping(int type);
 
 int main(int argc,char *argv[]){
@@ -58,6 +61,7 @@ int main(int argc,char *argv[]){
         nums:  how many times we need to run simulation
     */
     int opt,flag = 0,nums=0;
+    float last_size=0.0;
     while((opt = getopt(argc,argv,"n:b:t:h"))!=-1){
         switch(opt){
             case 'n':
@@ -69,7 +73,7 @@ int main(int argc,char *argv[]){
                 buffer_size = atoi(optarg) + 1;
                 break;
             case 't':
-                total_sim_time = atof(optarg);
+                total_sim_time = atof(optarg)*TIME_SCALE;
                 break;
             case 'h':
                 helper(stdout,argv[0]);
@@ -86,9 +90,12 @@ int main(int argc,char *argv[]){
     init_simulation();
     // base on event queue to do simulation
     while(current_sim_time < total_sim_time){
-        print_all(event_queue);
+        // print_all(event_queue);
+        // print_all(buffer_queue);
         // pop out event from event queue
         frame_frac *e = pop(event_queue);
+        // update current simulation clock
+        current_sim_time = (float)e->timestamp;
         // interpret the type of this event
         switch(e->type){
             case 0:
@@ -97,26 +104,27 @@ int main(int argc,char *argv[]){
                     // overflow
                     dropping(0);
                     // inc 
-                    // drop_c++;
+                    drop_c++;
                 }
                 else{
                     // push into buffer queue
-                    create_and_push(buffer_queue,0,e->timestamp);
+                    push(buffer_queue,e);
+                    last_size=e->size;
                 }
                 // Then schedule bot arrival
-                schedule(1);
+                schedule(1,0.0);
                 // inc counter
                 input_video_pieces++;
             break;
             case 1:
                 // schedule the next top arrival event
-                schedule(0);
+                schedule(0,0.0);
                 // bot arrival -> check first, then schedule top
                 if(check_buffer()){
                     // overflow -> pop out the last element in buffer queue
                     dropping(1);
                     // inc 
-                    // drop_c++;
+                    drop_c++;
                 }
                 else{
                     // Checking this bot's top is discard or not
@@ -124,13 +132,14 @@ int main(int argc,char *argv[]){
                         // no need to push, set drop_filter back to -1
                         drop_filter = -1;
                         // inc 
-                        // drop_c++;
+                        drop_c++;
                     }
                     else{
                         // Its matching top is save
-                        create_and_push(buffer_queue,1,e->timestamp);
+                        push(buffer_queue,e);
                         // schedule encode matching top, bot arrival (because available bottom can schedule a pair encoded frame arrival)
-                        schedule(2);
+                        schedule(2,last_size);
+                        last_size=e->size;
                     }
                 }
                 input_video_pieces++;
@@ -138,13 +147,17 @@ int main(int argc,char *argv[]){
             case 2:
                 // encoded top arrival -> push the element in storage server
                 push(storage_queue,e);
-                schedule(3);
+                // pop out from buffer 
+                pop_back(buffer_queue);
+                schedule(3,last_size);
             break;
             case 3:
                 // encoded bot arrival -> do nothing
                 // schedule one leaving event -> frame completed
                 push(storage_queue,e);
-                schedule(4);
+                // pop out from buffer 
+                pop_back(buffer_queue);
+                schedule(4,0.0);
             break;
             case 4:
                 // need to add up completed frame number
@@ -166,9 +179,6 @@ int main(int argc,char *argv[]){
             default:
                 printf("Invalid event!\n");
         }
-        
-        // update current simulation clock
-        current_sim_time = (float)e->timestamp;
     }
     printf("Current simulation time: %f;\tTotal simulation time %f\n",current_sim_time,total_sim_time);
     printf("Total arrival pieces(top,bot): %d\n",input_video_pieces);
@@ -179,10 +189,15 @@ int main(int argc,char *argv[]){
     return 0;
 }
 
-void schedule(int type){
+void schedule(int type,float inherit_size){
     float t = expon(mean);
     // create & push & sort by timestamp
-    create_push_sort(event_queue,type,current_sim_time+t);
+    if(type == 1 || type == 0)
+        create_push_sort(event_queue,type,expon(0.1),current_sim_time+t);
+    else if(type == 2 || type == 3)
+        create_push_sort(event_queue,type,inherit_size,current_sim_time+50*expon(inherit_size));
+    else 
+        create_push_sort(event_queue,type,expon(0.1),current_sim_time+t);
 }
 
 void dropping(int type){
@@ -195,6 +210,8 @@ void dropping(int type){
         case 1:
             // incoming event is bot field, need to pop out the buffer queue from the back
             pop_back(buffer_queue);
+            // inc
+            drop_c++;
         break;
         default:
             printf("Invalid dropping type, ignore!");
@@ -218,7 +235,7 @@ void init_simulation(){
     input_video_pieces=0;
     output_video_pieces=0;
     // push the top field into queue at time 0
-    create_push_sort(event_queue,0,0);
+    create_push_sort(event_queue,0,expon(0.1),0);
 }
 
 void helper(FILE *fp,char *program){

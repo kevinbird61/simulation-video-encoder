@@ -62,3 +62,6 @@ doc/package-lock.json
 
 # Executables
 main
+
+# Results
+result/

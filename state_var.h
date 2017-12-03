@@ -8,7 +8,7 @@ typedef float inter_t;
 // 0: top, 1: bottom
 typedef struct frame_piece {
     int type;
-    int size;
+    float size;
     inter_t timestamp;
     // for link-list
     struct frame_piece *parent;
