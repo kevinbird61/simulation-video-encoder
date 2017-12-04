@@ -11,6 +11,7 @@
 
 // 1hr=60min * 60sec
 #define TIME_SCALE 3600
+#define ENCODE_SCALE 50
 
 extern char *optarg;
 extern int optind, opterr, optopt;
@@ -120,7 +121,7 @@ int main(int argc,char *argv[]){
     init_simulation();
     // base on event queue to do simulation
     while(current_sim_time < total_sim_time){
-        //print_all(event_queue);
+        // print_all(event_queue);
         // print_all(buffer_queue);
         // pop out event from event queue
         frame_frac *e = pop(event_queue);
@@ -178,7 +179,7 @@ int main(int argc,char *argv[]){
                 // encoded top arrival -> push the element in storage server
                 push(storage_queue,e);
                 // pop out from buffer 
-                pop_back(buffer_queue);
+                h1=pop_back(buffer_queue)->size;
                 schedule(3,last_size);
             break;
             case 3:
@@ -186,8 +187,8 @@ int main(int argc,char *argv[]){
                 // schedule one leaving event -> frame completed
                 push(storage_queue,e);
                 // pop out from buffer 
-                pop_back(buffer_queue);
-                schedule(4,0.0);
+                h2=pop_back(buffer_queue)->size;
+                schedule(4,h1+h2);
             break;
             case 4:
                 // need to add up completed frame number
@@ -212,24 +213,31 @@ int main(int argc,char *argv[]){
     }
     printf("Current simulation time: %f;\tTotal simulation time %f\n",current_sim_time,total_sim_time);
     printf("Total arrival pieces(top,bot): %d\n",input_video_pieces);
-    printf("Total dropping pieces: %d\n",drop_c);
+    printf("Total dropping pieces: %d, fobs loss= %f\n",drop_c,(float)drop_c/input_video_pieces);
     printf("Output frame pieces(result top,bot): %d\n",output_video_pieces);
+    printf("Server utilization: %f",(float)output_video_pieces/input_video_pieces);
+    printf("Remaining pieces in buffer queue: %d, storage queue: %d\n",get_size(buffer_queue),get_size(storage_queue));
     // free all existed memory usage
     drop_all();
     return 0;
 }
 
 void schedule(int type,float inherit_size){
-    float t = expon(mean);
     // create & push & sort by timestamp
     if(type == 1 || type == 0)
-        create_push_sort(event_queue,type,expon(0.1),current_sim_time+t);
+        create_push_sort(event_queue,type,expon(param_c),current_sim_time+expon(param_f));
     else if(type == 2 || type == 3){
-        // create_push_sort(event_queue,type,inherit_size,current_sim_time+50*expon(inherit_size));
-        create_push_sort(event_queue,type,inherit_size,current_sim_time+expon(265.5));
+        // need to calculate encoding process time by size(inherit size)
+        float time_spent = inherit_size/(float)(Cenc);
+        // printf("encode: %f\n",time_spent);
+        create_push_sort(event_queue,type,inherit_size,current_sim_time+time_spent*ENCODE_SCALE);
     }
-    else 
-        create_push_sort(event_queue,type,expon(0.1),current_sim_time+t);
+    else{
+        // need to calculate storaging process time by h1+h2 size (inherit)
+        float time_spent = (alpha*inherit_size)/(float)Cstorage;
+        // printf("storage size: %f, time: %f\n",alpha*inherit_size,time_spent);
+        create_push_sort(event_queue,type,(alpha*inherit_size),current_sim_time+time_spent);
+    }
 }
 
 void dropping(int type){
@@ -267,7 +275,7 @@ void init_simulation(){
     input_video_pieces=0;
     output_video_pieces=0;
     // push the top field into queue at time 0
-    create_push_sort(event_queue,0,expon(0.1),0);
+    create_push_sort(event_queue,0,expon(param_c),0);
 }
 
 void helper(FILE *fp,char *program){
