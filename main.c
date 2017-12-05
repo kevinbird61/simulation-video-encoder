@@ -39,17 +39,20 @@ float mean = 0.1,current_sim_time = 0,total_sim_time = 0.0,time_last_event=0.0;
 float alpha=0.0,param_f=0.0,param_c=0.0;
 int buffer_size,drop_c=0,frame_c=0,drop_filter=-1,input_video_pieces=0,output_video_pieces=0;
 int Cenc=15800,Cstorage=1600;
+char *report_type;
 /** ================= define individual process function here =================
     helper:             printing the usage information
     init_simulation:    initialize the simulation routine
     check_buffer:       checking the buffer size, whether it's available or not, then do schedule
     schedule:           base on its type to push event into event queue -> increase queue length, and increase simulation time
+    report_gen:         report generator
 */
 void helper(FILE *fp,char *program);
 void init_simulation();
 int check_buffer();
 void schedule(int type,float inherit_size); 
 void dropping(int type);
+void report_gen();
 
 int main(int argc,char *argv[]){
     fprintf(stdout,
@@ -72,7 +75,7 @@ int main(int argc,char *argv[]){
     */
     int opt,flag = 0,nums=0;
     float last_size=0.0,h1=0.0,h2=0.0;
-    while((opt = getopt(argc,argv,"n:b:t:a:e:s:f:c:h"))!=-1){
+    while((opt = getopt(argc,argv,"n:b:t:a:e:s:f:c:r:h"))!=-1){
         switch(opt){
             case 'n':
                 // assign round 
@@ -104,6 +107,12 @@ int main(int argc,char *argv[]){
             case 'c':
                 // get param2
                 param_c = atof(optarg);
+                break;
+            case 'r':
+                // 
+                report_type = malloc(strlen(optarg)*sizeof(char));
+                strcpy(report_type,optarg);
+                printf("%s",report_type);
                 break;
             case 'h':
                 helper(stdout,argv[0]);
@@ -217,6 +226,9 @@ int main(int argc,char *argv[]){
     printf("Output frame pieces(result top,bot): %d\n",output_video_pieces);
     printf("Server utilization: %f",(float)output_video_pieces/input_video_pieces);
     printf("Remaining pieces in buffer queue: %d, storage queue: %d\n",get_size(buffer_queue),get_size(storage_queue));
+
+    // Report Generator
+    report_gen();
     // free all existed memory usage
     drop_all();
     return 0;
@@ -280,7 +292,7 @@ void init_simulation(){
 
 void helper(FILE *fp,char *program){
     fprintf(fp,
-        "Usage: %s [-t time] [-b buffer] [-n nums] [-a alpha] [-e Cenc] [-s Cs] [-f param1] [-c param2]\n\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n",
+        "Usage: %s [-t time] [-b buffer] [-n nums] [-a alpha] [-e Cenc] [-s Cs] [-f param1] [-c param2] [-r report]\n\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n",
         program,
         "  -n nums:\tspecify how many times you want to run the simulation routine",
         "  -t time:\tspecify the total simulation time (hours)",
@@ -289,6 +301,15 @@ void helper(FILE *fp,char *program){
         "  -e Cenc:\tspecify the encoding speed of encoder",
         "  -s Cstorage:\tspecify the storaging speed of storage server",
         "  -f param1:\tspecify the parameter of time between field arrival(secs)",
-        "  -c param2:\tspecify the parameter of complexity of a field(fods)\n"
+        "  -c param2:\tspecify the parameter of complexity of a field(fods)",
+        "  -r report:\tspecify the report type name(for gnuplot usage)\n"
         );
+}
+
+void report_gen(){
+    // write to file, prepare for plot
+    FILE *rp = fopen("plot/report.txt","a");
+    // type_name,param_f,param_c,buffer_size,frame_loss,utilization
+    fprintf(rp,"%s %f %f\n",
+        strlen(report_type)>0?report_type:"Case",(float)drop_c/input_video_pieces,(float)output_video_pieces/input_video_pieces);
 }

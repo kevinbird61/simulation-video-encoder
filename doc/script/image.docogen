@@ -42,6 +42,13 @@
                             "caption": "Memory usage(Queue)",
                             "size": 1,
                             "align": "center"
+                        },
+						{
+                            "path": "../../plot/report.png",
+                            "flag": "rel",
+                            "caption": "Entire Simulation System Report",
+                            "size": 1,
+                            "align": "center"
                         }
                     ],
                     "figure": [
