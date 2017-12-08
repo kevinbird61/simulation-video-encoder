@@ -34,7 +34,7 @@ $ make run
 ```
 
 ## Project result export
-```
+```bash
 # Project use case output
 $ make proj
 
@@ -69,7 +69,7 @@ $ make run_g
 ![](res/encoder.png)
 
 ## Memory usage (Queue)
-![](res/queue)
+![](res/queue.png)
 
 # Document 
 - [simulation report paper](doc/simulation-report.pdf)
