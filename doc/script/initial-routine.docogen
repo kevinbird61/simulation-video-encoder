@@ -1,0 +1,60 @@
+{
+    "article": [
+        {
+            "title": "Entire System",
+            "priority": 2,
+            "content": [
+                {
+                    "name": "Explanation",
+                    "type": "text",
+                    "data": [
+                        {
+                            "info": "This simulation is based on the video frame encoding server to build its model."
+                        },
+                        {
+                            "info": "All the event can be pushed into main event queue, which the simulation clock will base on it and progress."
+                        },
+                        {
+                            "info": "And the other queue: buffer and storage server can directly use the top event and bottom event. These event have a special data structure, that can adapt size with each event together(Discuss Later)."
+                        }
+                    ],
+                    "figure": [
+                    ],
+                    "subarticle": [
+                    ]
+                },
+                {
+                    "name": "Several Routine",
+                    "type": "list",
+                    "data": [
+                        {
+                            "name": "Initial Routine(Arrival)",
+                            "subitems":[
+                                { "name": "Top field arrival" },
+                                { "name": "Bot field arrival" }
+                            ]
+                        },
+                        {
+                            "name": "Encoding Process",
+                            "subitems": [
+                                { "name": "Encoding Event(Top/Bot)" }
+                            ]
+                        },
+                        {
+                            "name": "Storage Process",
+                            "subitems": [
+                                { "name": "Leave Event(Top+Bot)" }
+                            ]
+                        }
+                    ],
+                    "figure": [
+                    ],
+                    "subarticle": [
+                    ]
+                }
+            ]
+        }
+    ],
+    "reference":[
+    ]
+}
