@@ -1,39 +1,37 @@
 # simulation-video-encoder
 Network simulation project, with some practices on video encoder server.
 
+--- 
+
 # Requirement
 > My develope environment 
 ## Standard 
-- gcc version 5.4,1
+- gcc version 5.4.1
 - GNU make 4.1
 - GNU gdb 7.11.1
 
 ## Document/Report
-- node.js (latest/v8.8.1)
-  - docogen (v0.1.5)
+- node.js (latest/v8.8.1) - [install guide](https://github.com/toolbuddy/docoGen/wiki/node.js-%E5%AE%89%E8%A3%9D)
+  - [docogen](https://github.com/toolbuddy/docoGen) (v0.1.5)
 - gnuplot (v5.0)
 
-# Usage
+---
+# Get Started
 
+## Basic
 ```bash
 # compile
 $ make
 
-# generate document with docogen
-$ make docogen
+# run example
+$ make run
 
 # clean all 
 $ make clean
 
-# clean doc dependencies
-$ make cleandoc
-
-# run example
-$ make run
-
 ```
 
-## Project result export
+## Project result export 
 ```bash
 # Project use case output
 $ make proj
@@ -45,6 +43,15 @@ $ make plot
 $ make proj && make plot
 ```
 
+## Generate document paper
+```
+# generate document with docogen
+$ make docogen
+
+# clean doc dependencies
+$ make cleandoc
+```
+
 ## Debug 
 
 ```bash
@@ -53,6 +60,36 @@ $ make gdb
 # gdb run (with sample config)
 $ make run_g
 ```
+
+# Run 
+
+* You can simpliy run `./main -h` to see helper manual (below).
+```bash
+Simulation:
+Type 1: bottom field
+Type 0: top field
+Type 2: encoded top field arrival
+Type 3: encoded bottom field arrival
+Type 4: leaving event
+===================================
+
+Usage: ./main [-t time] [-b buffer] [-n nums] [-a alpha] [-e Cenc] [-s Cs] [-f param1] [-c param2] [-r report]
+
+  -n nums:	specify how many times you want to run the simulation routine
+  -t time:	specify the total simulation time (hours)
+  -b buffer:	specify the buffer size
+  -a alpha:	specify the parameter of storage process
+  -e Cenc:	specify the encoding speed of encoder
+  -s Cstorage:	specify the storaging speed of storage server
+  -f param1:	specify the parameter of time between field arrival(secs)
+  -c param2:	specify the parameter of complexity of a field(fods)
+  -r report:	specify the report type name(for gnuplot usage)
+
+```
+
+# Document 
+- [simulation report paper](doc/simulation-report.pdf)
+- [discussion note](https://paper.dropbox.com/doc/Project-1-DiscussNote-p1Jgb0YwDkpAioDyNFvHs)
 
 # Flowchart
 
@@ -71,5 +108,4 @@ $ make run_g
 ## Memory usage (Queue)
 ![](res/queue.png)
 
-# Document 
-- [simulation report paper](doc/simulation-report.pdf)
+
